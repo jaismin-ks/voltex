@@ -14,7 +14,23 @@
 
 Transparent, weighted storm-risk scoring for Ontario distribution operators — wind, canopy, flood exposure, outage history, and historical severe weather fused into zone-level risk tiers, with an LLM-generated response brief.
 
+Built at **Seneca Hackathon 2026** by
+[@bmar1](https://github.com/bmar1) ·
+[@angelshinh1](https://github.com/angelshinh1) ·
+[@jaismin-ks](https://github.com/jaismin-ks) ·
+[@Surya-Uday-Singh](https://github.com/Surya-Uday-Singh)
+
 </div>
+
+---
+
+## Demo
+
+Voltex needs API keys to run live, so it isn't hosted. Here's a walkthrough instead:
+
+<video src="demo.mp4" controls width="100%"></video>
+
+▶️ [Watch the demo video](demo.mp4)
 
 ---
 
