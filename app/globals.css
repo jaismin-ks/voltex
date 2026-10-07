@@ -1,0 +1,844 @@
+@import "tailwindcss";
+
+/*
+ * Voltex palette.
+ *
+ * Dark theme: deep midnight ink + clean paper foreground + electric blue signal.
+ * Light theme: clean off-white paper + deep ink foreground + deeper blue signal.
+ *
+ * Risk colors are intentionally muted, not saturated, to read as serious
+ * civic infrastructure rather than dashboard chrome. Risk hues are tuned
+ * per-theme so they retain contrast on each background.
+ */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --background: #101216;
+  --background-elev: #181c22;
+  --background-deep: #0a0c10;
+  --foreground: #e8ecf2;
+  --paper: #e8ecf2;
+  --paper-dim: #b0b8c8;
+  --muted: #6b7280;
+  --muted-strong: #8b95a6;
+
+  --surface: rgba(232, 236, 242, 0.05);
+  --surface-strong: rgba(232, 236, 242, 0.1);
+  --border: rgba(232, 236, 242, 0.12);
+  --border-strong: rgba(232, 236, 242, 0.22);
+
+  /* Translucent glass for panels/tooltips that sit over the map. */
+  --overlay: rgba(10, 12, 16, 0.85);
+  --overlay-strong: rgba(8, 10, 14, 0.94);
+
+  --risk-low: #5cb87a;
+  --risk-medium: #e8a94e;
+  --risk-high: #e05a5a;
+
+  --signal: #6c9cff;
+  --signal-deep: #3a6fd8;
+  --signal-soft: rgba(108, 156, 255, 0.14);
+  --signal-strong: rgba(108, 156, 255, 0.4);
+
+  /* Carto tile layer name, read by RiskDashboard. */
+  --map-tiles: "dark_nolabels";
+
+  --accent: var(--signal);
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Cool off-white — panels and map read as clean utility UI, not warm stock. */
+  --background: #f0f2f5;
+  --background-elev: #e4e8ef;
+  --background-deep: #d8dee8;
+  --foreground: #101216;
+  --paper: #101216;
+  --paper-dim: #3d4555;
+  --muted: #6b7280;
+  --muted-strong: #4b5563;
+
+  --surface: rgba(16, 18, 22, 0.06);
+  --surface-strong: rgba(16, 18, 22, 0.11);
+  --border: rgba(16, 18, 22, 0.14);
+  --border-strong: rgba(16, 18, 22, 0.26);
+
+  --overlay: rgba(240, 242, 245, 0.94);
+  --overlay-strong: rgba(228, 232, 239, 0.97);
+
+  --risk-low: #3d8f5c;
+  --risk-medium: #c4842e;
+  --risk-high: #c43e3e;
+
+  --signal: #3a6fd8;
+  --signal-deep: #2554a8;
+  --signal-soft: rgba(58, 111, 216, 0.16);
+  --signal-strong: rgba(58, 111, 216, 0.42);
+
+  /* Match the nav/page chrome; light map tiles are blended onto this tone. */
+  --map-background: var(--background);
+  --map-wash: rgba(240, 242, 245, 0.44);
+
+  --map-tiles: "light_nolabels";
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-accent: var(--signal);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html,
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Inter, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background-image:
+    radial-gradient(1200px 700px at 78% -10%, rgba(108, 156, 255, 0.10), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(108, 156, 255, 0.05), transparent 60%);
+}
+
+[data-theme="light"] body {
+  background-image:
+    radial-gradient(1100px 650px at 82% -8%, rgba(58, 111, 216, 0.12), transparent 58%),
+    radial-gradient(800px 480px at -8% 105%, rgba(58, 111, 216, 0.08), transparent 62%);
+}
+
+.gg-grain {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.55;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 0.95 0 0 0 0 0.85 0 0 0 0.05 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+[data-theme="light"] .gg-grain {
+  opacity: 0.22;
+  mix-blend-mode: multiply;
+}
+
+.gg-vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(120% 80% at 50% 0%, transparent 55%, var(--background-deep) 100%);
+}
+
+[data-theme="light"] .gg-vignette {
+  opacity: 0.55;
+}
+
+.gg-orb {
+  pointer-events: none;
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(52px);
+  opacity: 0.7;
+}
+
+.gg-orb-a {
+  right: 5%;
+  top: 4rem;
+  height: 20rem;
+  width: 20rem;
+  background: rgba(108, 156, 255, 0.18);
+}
+
+.gg-orb-b {
+  bottom: 6rem;
+  left: -7rem;
+  height: 24rem;
+  width: 24rem;
+  background: rgba(108, 156, 255, 0.08);
+}
+
+.gg-divider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(241, 235, 222, 0.14) 20%,
+    rgba(241, 235, 222, 0.14) 80%,
+    transparent 100%
+  );
+}
+
+.gg-signal-line {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(108, 156, 255, 0.5) 50%,
+    transparent 100%
+  );
+}
+
+.gg-hero-portrait {
+  /* Frame for the Gemini-generated brand image. */
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  border: 1px solid var(--border-strong);
+  box-shadow:
+    inset 0 1px 0 rgba(241, 235, 222, 0.06),
+    0 40px 120px rgba(0, 0, 0, 0.5);
+  background: #0a0c10;
+}
+
+.gg-hero-portrait::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(140% 80% at 70% 0%, rgba(108, 156, 255, 0.08), transparent 60%);
+  pointer-events: none;
+}
+
+::selection {
+  background: rgba(108, 156, 255, 0.32);
+  color: var(--foreground);
+}
+
+a,
+button {
+  outline: none;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+.gg-press {
+  transition:
+    transform 160ms var(--ease-out),
+    background-color 160ms var(--ease-out),
+    border-color 160ms var(--ease-out),
+    color 160ms var(--ease-out);
+}
+.gg-press:active {
+  transform: scale(0.97);
+}
+
+.gg-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.gg-card-strong {
+  background: var(--surface-strong);
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+}
+
+.gg-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--paper-dim);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 999px;
+}
+
+.gg-chip-signal {
+  color: var(--signal);
+  border-color: var(--signal-strong);
+  background: var(--signal-soft);
+}
+
+.gg-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 12px;
+  transition:
+    transform 160ms var(--ease-out),
+    background-color 160ms var(--ease-out),
+    border-color 160ms var(--ease-out),
+    color 160ms var(--ease-out);
+}
+.gg-btn:active {
+  transform: scale(0.97);
+}
+
+.gg-btn-primary {
+  color: var(--background);
+  background: var(--paper);
+}
+.gg-btn-primary:hover {
+  background: var(--paper);
+  filter: brightness(1.05);
+}
+
+.gg-btn-signal {
+  color: var(--signal);
+  border: 1px solid var(--signal-strong);
+  background: var(--signal-soft);
+}
+.gg-btn-signal:hover {
+  color: #b8d4ff;
+  background: rgba(108, 156, 255, 0.2);
+  border-color: var(--signal);
+}
+
+.gg-btn-ghost {
+  color: var(--paper-dim);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.gg-btn-ghost:hover {
+  color: var(--paper);
+  border-color: var(--border-strong);
+}
+
+.gg-text-signal {
+  color: var(--signal);
+}
+
+.gg-enter {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: gg-rise 320ms var(--ease-out) forwards;
+}
+.gg-enter-1 { animation-delay: 30ms; }
+.gg-enter-2 { animation-delay: 80ms; }
+.gg-enter-3 { animation-delay: 130ms; }
+.gg-enter-4 { animation-delay: 180ms; }
+.gg-enter-5 { animation-delay: 230ms; }
+
+@keyframes gg-rise {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.gg-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.gg-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(241, 235, 222, 0.06) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  animation: gg-shimmer 1400ms linear infinite;
+}
+@keyframes gg-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gg-enter,
+  .gg-enter-1,
+  .gg-enter-2,
+  .gg-enter-3,
+  .gg-enter-4,
+  .gg-enter-5 {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  .gg-shimmer::after { animation: none; }
+}
+
+/* Leaflet polish */
+.leaflet-container {
+  background: var(--map-background, var(--background-deep));
+  font-family: inherit;
+}
+
+/*
+ * Theme-specific Carto basemaps. Dark uses the dark basemap; light uses the
+ * white basemap, then tones it down into cream so it stays readable.
+ * Filters target .leaflet-tile-pane only so pins/controls stay crisp.
+ */
+:root .leaflet-tile-pane,
+[data-theme="dark"] .leaflet-tile-pane {
+  filter: brightness(1.55) saturate(0.55) sepia(0.3) hue-rotate(-6deg);
+  transition: filter 320ms var(--ease-out);
+}
+
+[data-theme="light"] .leaflet-tile-pane {
+  /* Use white tiles, but let the nav-colored map canvas dominate. */
+  opacity: 0.56;
+  filter: brightness(0.78) sepia(0.36) saturate(0.52) contrast(0.82) hue-rotate(-5deg);
+}
+
+/* Warm wash — stronger in light mode so water/land never glow. */
+.leaflet-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 250;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 320ms var(--ease-out);
+}
+
+[data-theme="light"] .leaflet-container::before {
+  opacity: 1;
+  background: var(--map-wash);
+  mix-blend-mode: multiply;
+}
+
+/* Subtle edge vignette on the map frame (React overlay, not Leaflet). */
+.gg-map-vignette {
+  pointer-events: none;
+  background: radial-gradient(
+    120% 85% at 50% 45%,
+    transparent 52%,
+    color-mix(in srgb, var(--background-deep) 55%, transparent) 100%
+  );
+  opacity: 0.65;
+  transition: opacity 320ms var(--ease-out);
+}
+
+[data-theme="light"] .gg-map-vignette {
+  opacity: 0.58;
+  background: radial-gradient(
+    115% 80% at 50% 42%,
+    transparent 54%,
+    color-mix(in srgb, var(--background) 78%, #8d734b) 100%
+  );
+}
+
+/* While panning/zooming, tiles settle slightly and pins dim. */
+.gg-map-active .leaflet-tile-pane {
+  transition-duration: 80ms;
+}
+
+[data-theme="light"] .gg-map-active .leaflet-tile-pane {
+  opacity: 0.5;
+  filter: brightness(0.74) sepia(0.4) saturate(0.48) contrast(0.8) hue-rotate(-5deg);
+}
+
+.gg-map-active .gg-map-vignette {
+  opacity: 0.95;
+}
+
+.gg-map-active .gg-risk-pin.is-dimmed {
+  opacity: 0.18;
+}
+
+/* Carto attribution text on light themes is unreadable on the dark control
+ * backgrounds we use; keep the controls themselves restrained. */
+.leaflet-control-zoom {
+  border: 1px solid var(--border) !important;
+  background: var(--overlay) !important;
+}
+.leaflet-control-zoom a {
+  background: transparent !important;
+  color: var(--paper) !important;
+  border-bottom-color: var(--border) !important;
+}
+.leaflet-control-zoom a:hover {
+  background: var(--surface-strong) !important;
+}
+
+.gg-pin {
+  position: relative;
+  display: inline-block;
+  pointer-events: auto;
+}
+.gg-pin .gg-pin-dot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  background: var(--signal);
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+  box-shadow:
+    0 0 0 2px rgba(12, 11, 10, 0.9),
+    0 0 14px rgba(108, 156, 255, 0.55);
+  z-index: 3;
+}
+.gg-pin .gg-pin-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(108, 156, 255, 0.45);
+  animation: gg-pulse 2400ms var(--ease-out) infinite;
+  z-index: 2;
+}
+.gg-pin .gg-pin-label {
+  position: absolute;
+  left: 16px;
+  top: -7px;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--paper);
+  letter-spacing: 0.02em;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(12, 11, 10, 0.85);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition:
+    opacity 200ms var(--ease-out),
+    transform 200ms var(--ease-out);
+  pointer-events: none;
+}
+.gg-pin:hover .gg-pin-label,
+.gg-pin.is-active .gg-pin-label {
+  opacity: 1;
+  transform: translateX(0);
+}
+.gg-pin:hover .gg-pin-dot,
+.gg-pin.is-active .gg-pin-dot {
+  background: #b8d4ff;
+  box-shadow:
+    0 0 0 2px rgba(12, 11, 10, 0.9),
+    0 0 22px rgba(108, 156, 255, 0.9);
+}
+
+@keyframes gg-pulse {
+  0% {
+    opacity: 0.85;
+    transform: translate(-50%, -50%) scale(0.55);
+  }
+  70% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.7);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.7);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gg-pin .gg-pin-ring {
+    animation: none;
+    opacity: 0.4;
+  }
+}
+
+/* Risk-tier pin variants for the dashboard map.
+ *
+ * Leaflet places the divIcon container at the marker's screen pixel using the
+ * iconAnchor offset. To keep the visual dot locked to its lat/lng at every
+ * zoom level we use a zero-sized icon (size 0x0, anchor 0,0) and absolutely
+ * position the children at (0,0) of that point with translate(-50%,-50%).
+ * That way ring/dot/label all radiate from the same exact coordinate.
+ */
+.gg-risk-pin {
+  pointer-events: auto;
+  --pin-color: var(--signal);
+  --pin-dot: 11px;
+  --pin-ring: 26px;
+  transition:
+    opacity 260ms var(--ease-out),
+    filter 260ms var(--ease-out);
+}
+.gg-risk-pin-high {
+  --pin-color: var(--risk-high);
+  --pin-dot: 14px;
+  --pin-ring: 32px;
+}
+.gg-risk-pin-medium {
+  --pin-color: var(--risk-medium);
+  --pin-dot: 11px;
+  --pin-ring: 26px;
+}
+.gg-risk-pin-low {
+  --pin-color: var(--risk-low);
+  --pin-dot: 9px;
+  --pin-ring: 22px;
+}
+.gg-risk-pin-custom {
+  --pin-color: var(--signal);
+  --pin-dot: 12px;
+  --pin-ring: 28px;
+}
+
+.gg-risk-pin .gg-risk-dot,
+.gg-risk-pin .gg-risk-ring,
+.gg-risk-pin .gg-risk-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: auto;
+}
+
+.gg-risk-pin .gg-risk-dot {
+  width: var(--pin-dot);
+  height: var(--pin-dot);
+  margin-left: calc(var(--pin-dot) / -2);
+  margin-top: calc(var(--pin-dot) / -2);
+  background: var(--pin-color);
+  border-radius: 999px;
+  box-shadow:
+    0 0 0 2px var(--background),
+    0 0 14px color-mix(in srgb, var(--pin-color) 60%, transparent);
+  z-index: 3;
+  transition: transform 180ms var(--ease-out), box-shadow 180ms var(--ease-out);
+}
+.gg-risk-pin .gg-risk-ring {
+  width: var(--pin-ring);
+  height: var(--pin-ring);
+  margin-left: calc(var(--pin-ring) / -2);
+  margin-top: calc(var(--pin-ring) / -2);
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--pin-color) 50%, transparent);
+  animation: gg-pulse 2600ms var(--ease-out) infinite;
+  z-index: 2;
+}
+.gg-risk-pin-high .gg-risk-ring {
+  /* Only High tier pulses fast; quieter tiers are static so the eye
+   * goes to what matters. */
+  animation-duration: 1800ms;
+}
+.gg-risk-pin-medium .gg-risk-ring,
+.gg-risk-pin-low .gg-risk-ring {
+  animation: none;
+  opacity: 0.45;
+}
+.gg-risk-pin .gg-risk-label {
+  margin-left: calc(var(--pin-dot) / 2 + 8px);
+  margin-top: -10px;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--paper);
+  letter-spacing: 0.02em;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: var(--overlay-strong);
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition:
+    opacity 200ms var(--ease-out),
+    transform 200ms var(--ease-out);
+  pointer-events: none;
+}
+.gg-risk-pin:hover .gg-risk-dot,
+.gg-risk-pin.is-active .gg-risk-dot {
+  transform: scale(1.18);
+  box-shadow:
+    0 0 0 2px var(--background),
+    0 0 22px color-mix(in srgb, var(--pin-color) 90%, transparent);
+}
+
+.gg-risk-pin:hover .gg-risk-label,
+.gg-risk-pin.is-active .gg-risk-label {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Pins outside the current viewport fade so in-frame risk reads clearly. */
+.gg-risk-pin.is-dimmed {
+  opacity: 0.34;
+  filter: saturate(0.45);
+}
+
+.gg-risk-pin.is-dimmed:hover {
+  opacity: 1 !important;
+  filter: none;
+  z-index: 900 !important;
+}
+
+.gg-risk-pin.is-dimmed:hover .gg-risk-ring {
+  opacity: 0.45;
+}
+
+.gg-risk-pin.is-dimmed .gg-risk-ring {
+  animation: none;
+  opacity: 0.15;
+}
+
+.gg-risk-pin.is-active {
+  opacity: 1 !important;
+  filter: none;
+  z-index: 900 !important;
+}
+
+/* Explore HUD — slides/fades as the viewport changes. */
+.gg-explore-hud {
+  animation: gg-hud-in 280ms var(--ease-out) both;
+}
+
+@keyframes gg-hud-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.gg-explore-stat {
+  transition:
+    opacity 200ms var(--ease-out),
+    transform 200ms var(--ease-out);
+}
+
+.gg-map-active .gg-explore-stat {
+  opacity: 0.55;
+  transform: scale(0.98);
+}
+
+/* Detail panel slide-in (from the right). */
+.gg-panel {
+  animation: gg-panel-in 320ms var(--ease-out) both;
+}
+@keyframes gg-panel-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gg-panel {
+    animation: none;
+  }
+}
+
+/* Tier-tinted score number used in panel and bottom bar. */
+.gg-tier-high { color: var(--risk-high); }
+.gg-tier-medium { color: var(--risk-medium); }
+.gg-tier-low { color: var(--risk-low); }
+
+/* Zone choropleth layer */
+.gg-zone-polygon {
+  transition: opacity 200ms var(--ease-out), fill-opacity 200ms var(--ease-out);
+}
+
+.gg-zone-tooltip {
+  background: var(--overlay-strong) !important;
+  border: 1px solid var(--border-strong) !important;
+  color: var(--paper) !important;
+  font-family: inherit !important;
+  font-size: 12px !important;
+  padding: 6px 10px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+}
+
+.gg-zone-legend {
+  background: var(--overlay);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  backdrop-filter: blur(8px);
+  transition: opacity 280ms var(--ease-out);
+}
+
+.gg-layer-toggle {
+  background: var(--overlay);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  backdrop-filter: blur(8px);
+}
+
+.gg-layer-toggle button {
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 160ms var(--ease-out);
+  letter-spacing: 0.02em;
+}
+
+.gg-layer-toggle button.active {
+  color: var(--paper);
+  background: var(--surface-strong);
+}
+
+.gg-layer-toggle button:hover:not(.active) {
+  color: var(--paper-dim);
+}
+
+/* Zone detail panel historical stats */
+.gg-zone-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.gg-zone-stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gg-zone-stat-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.gg-zone-stat-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--paper);
+  line-height: 1;
+}
+
+.gg-zone-stat-label {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  line-height: 1.2;
+}

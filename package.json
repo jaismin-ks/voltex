@@ -1,0 +1,35 @@
+{
+  "name": "voltex",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "npm run build:deploy-data && next build",
+    "start": "next start",
+    "lint": "eslint",
+    "build:data": "node --max-old-space-size=4096 ./scripts/build-indices.mjs && node ./scripts/build-hex-grid.mjs && node ./scripts/build-weather-history.mjs",
+    "build:deploy-data": "node ./scripts/build-hex-grid.mjs && node ./scripts/build-weather-history.mjs"
+  },
+  "dependencies": {
+    "csv-parse": "^6.2.1",
+    "h3-js": "^4.4.0",
+    "leaflet": "^1.9.4",
+    "next": "16.2.6",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-leaflet": "^5.0.0"
+  },
+  "devDependencies": {
+    "@emnapi/core": "1.10.0",
+    "@emnapi/runtime": "1.10.0",
+    "@tailwindcss/postcss": "^4",
+    "@types/leaflet": "^1.9.21",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.6",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
