@@ -28,11 +28,11 @@ Built at **Seneca Hackathon 2026** by
 
 Voltex needs API keys to run live, so it isn't hosted. Here's a walkthrough instead:
 
-<a href="https://github.com/jaismin-ks/voltex/raw/main/demo.mp4">
+<a href="https://cdn.jsdelivr.net/gh/jaismin-ks/voltex@main/demo.mp4">
   <img alt="Voltex demo video — click to watch" src="public/demo-thumbnail.png" width="100%">
 </a>
 
-▶️ [Watch the demo video](https://github.com/jaismin-ks/voltex/raw/main/demo.mp4)
+▶️ [Watch the demo video](https://cdn.jsdelivr.net/gh/jaismin-ks/voltex@main/demo.mp4)
 
 ---
 
